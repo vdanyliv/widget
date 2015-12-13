@@ -1,0 +1,23 @@
+{
+  "name": "widget",
+  "version": "1.0.0",
+  "description": "",
+  "main": "1w-sdk.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dosandk/widget.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dosandk/widget/issues"
+  },
+  "homepage": "https://github.com/dosandk/widget#readme",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-inline-css": "^3.0.0"
+  }
+}

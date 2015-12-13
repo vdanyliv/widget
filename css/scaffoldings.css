@@ -1,0 +1,64 @@
+.display-table {
+    display: table;
+}
+
+.display-table-row {
+    display: table-row;
+}
+
+.display-table-cell {
+    display: table-cell;
+}
+
+.inline-baseline-middle {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.fixed-table-layout {
+    table-layout: fixed;
+}
+
+.parent-size {
+    width: 100%;
+    height: 100%;
+}
+
+.parent-width {
+    width: 100%;
+}
+
+.parent-height {
+    height: 100%;
+}
+
+.parent-half-width {
+    width: 50%;
+}
+
+.relative {
+    position: relative;
+}
+
+.vertical-align-top {
+    vertical-align: top;
+}
+.vertical-align-middle {
+    vertical-align: middle;
+}
+.vertical-align-bottom {
+    vertical-align: bottom;
+}
+
+.to-center-inline, .align-center {
+    text-align: center;
+}
+
+.reset-ul-style {
+    margin: 0;
+    padding: 0;
+}
+.reset-ul-style li {
+    list-style-type: none;
+}
+
