@@ -1,7 +1,5 @@
 ;(function(root, factory){
-    var widgetConstructor = factory();
-
-    if (!root.oneWorldWidget) root.oneWorldWidget = new widgetConstructor();
+    if (!root.oneWorldWidget) root.oneWorldWidget = factory();
 
     document.addEventListener('DOMContentLoaded', oneWorldWidget.initialize.bind(oneWorldWidget));
 
@@ -46,19 +44,18 @@
         }
     }
 
-    return function(elem) {
-        this.version = '0.0.1';
-        this.widgetElement = null;
-        this.initialize = function() {
+    return {
+        version: '0.0.1',
+        widgetElement: null,
+        initialize: function() {
             console.error('widget was initialized');
 
             this.render();
-        };
-        this.render = function() {
-            var self = this,
-                element = elem ? elem : widgetContainer;
+        },
+        render: function() {
+            var self = this;
 
-            self.widgetElement = getElement(element);
+            self.widgetElement = getElement(widgetContainer);
 
             ajax({
                 url: './templates/widget-content.tpl',
@@ -73,11 +70,11 @@
                     }
                 }
             });
-        };
-        this.hide = function () {
+        },
+        hide: function () {
             if (this.widgetElement) this.widgetElement.style.display = 'none';
-        };
-        this.show = function() {
+        },
+        show: function() {
             if (this.widgetElement.style.display === 'none') this.widgetElement.style.display = 'block';
         }
     }

@@ -5,19 +5,19 @@
         <ul class="reset-ul-style" style="margin: 0; padding: 0;">
             <li style="list-style-type: none;">
                 <label style="cursor: pointer">
-                    <input name="answer" type="radio">
+                    <input class="vote" name="answer" type="radio" data-id="answer-1">
                     answer 1
                 </label>
             </li>
             <li style="list-style-type: none;">
                 <label style="cursor: pointer">
-                    <input name="answer" type="radio">
+                    <input class="vote" name="answer" type="radio" data-id="answer-2">
                     answer 2
                 </label>
             </li>
             <li style="list-style-type: none;">
                 <label style="cursor: pointer">
-                    <input name="answer" type="radio">
+                    <input class="vote" name="answer" type="radio" data-id="answer-3">
                     answer 3
                 </label>
             </li>
