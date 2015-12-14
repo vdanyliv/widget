@@ -3,8 +3,8 @@
 
     document.addEventListener('DOMContentLoaded', oneWorldWidget.initialize.bind(oneWorldWidget));
 
-}(window, function() {
-    var widgetContainer = 'widget';
+}(this, function() {
+    var widgetContainer = 'widgetsdf';
 
     function getElement(id) {
         return document.getElementById(id);
@@ -49,7 +49,12 @@
             ajax({
                 url: './templates/widget-content.tpl',
                 callbackSuccess: function(response) {
-                    self.widgetElement.innerHTML = response;
+                    try {
+                        self.widgetElement.innerHTML = response;
+                    }
+                    catch (e) {
+                        console.log('1W Error ' + e.name + ":" + e.message + "\n" + e.stack);
+                    }
                 }
             });
         },

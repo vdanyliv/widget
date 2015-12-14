@@ -62,3 +62,6 @@
     list-style-type: none;
 }
 
+.pointer {
+    cursor: pointer;
+}
