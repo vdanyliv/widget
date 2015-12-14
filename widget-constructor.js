@@ -4,7 +4,7 @@
     document.addEventListener('DOMContentLoaded', oneWorldWidget.initialize.bind(oneWorldWidget));
 
 }(this, function() {
-    var widgetContainer = 'widgetsdf';
+    var widgetContainer = 'widget';
 
     function getElement(id) {
         return document.getElementById(id);
