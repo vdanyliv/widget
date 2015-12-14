@@ -37,12 +37,20 @@
         var elements = getElements('vote'),
             index = elements.length;
 
-        while(index--) {
+        while (index--) {
             elements[index].addEventListener('change', function() {
-                console.log('Voted: ', this.getAttribute('data-id'));
+                var sideId = this.getAttribute('data-side-id');
+
+                sdk.pollVote(sideId);
             });
         }
     }
+
+    var sdk = {
+        pollVote: function(sideId) {
+            console.log('Voted: ', sideId);
+        }
+    };
 
     return {
         version: '0.0.1',
@@ -63,7 +71,7 @@
                     try {
                         self.widgetElement.innerHTML = response;
 
-                        initListeners();
+                        initListeners.call(self);
                     }
                     catch (e) {
                         console.log('1W Error ' + e.name + ":" + e.message + "\n" + e.stack);
@@ -79,3 +87,7 @@
         }
     }
 }));
+
+// 1. Object var App = {};
+// 2. Function var App = function() {}; App.initialize();
+// 3. Self-invoking function (function() {}());

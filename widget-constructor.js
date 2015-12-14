@@ -41,32 +41,60 @@
 
         while(index--) {
             elements[index].addEventListener('change', function() {
-                console.log('Voted: ', this.getAttribute('data-id'));
+                var sideId = this.getAttribute('data-side-id');
+
+                sdk.pollVote(sideId);
             });
         }
     }
 
-    return function(elem) {
+    var sdk = {
+        pollVote: function(sideId) {
+            console.log('Voted: ', sideId);
+        }
+    };
+
+    return function(elem, tpl) {
         this.version = '0.0.1';
         this.widgetElement = null;
-        this.initialize = function() {
-            console.error('widget was initialized');
+        this.template = '';
 
-            this.render();
+        this.initialize = function() {
+            var self = this;
+
+            self.template = tpl ? tpl : self.template;
+
+            if (self.template) {
+                self.render();
+            }
+            else {
+                self.getTemplate(function() {
+                    self.render();
+                });
+            }
         };
+
         this.render = function() {
             var self = this,
                 element = elem ? elem : widgetContainer;
 
             self.widgetElement = getElement(element);
+            self.widgetElement.innerHTML = self.template;
+            initListeners.call(self);
+        };
+
+        this.getTemplate = function(callback) {
+            var self = this;
 
             ajax({
                 url: './templates/widget-content.tpl',
                 callbackSuccess: function(response) {
                     try {
-                        self.widgetElement.innerHTML = response;
+                        self.template = response;
 
-                        initListeners();
+                        if (typeof callback === 'function') {
+                            callback();
+                        }
                     }
                     catch (e) {
                         console.log('1W Error ' + e.name + ":" + e.message + "\n" + e.stack);
@@ -74,9 +102,11 @@
                 }
             });
         };
+
         this.hide = function () {
             if (this.widgetElement) this.widgetElement.style.display = 'none';
         };
+
         this.show = function() {
             if (this.widgetElement.style.display === 'none') this.widgetElement.style.display = 'block';
         }
