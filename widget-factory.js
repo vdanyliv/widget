@@ -7,7 +7,8 @@
     var widgetListCode = [],
         tplListener = {},
         templates = {},
-        tplUrl = './templates/widget-content.tpl',
+        styleCollection = {},
+        tplUrl = './build/templates/widget-content.tpl',
         widgetParams = {
             width: 200, //can be use with 'flexible' param
             height: 300,
@@ -108,12 +109,23 @@
         return templates;
     }
 
+    function prepareCss(tpl) {
+        var re = /<css[\s\t]*>(((?!<\/tpl).)*)<\/css>/g;
+
+        tpl.replace(/(\r\n|\n|\r)/gm, "").replace(re, function(matchStr, style) {
+            styleCollection['css'] = style;
+        });
+
+        return styleCollection;
+    }
+
     function renderTpl() {
         var frame;
 
         for (var i = 0; i < widgetListCode.length; i++) {
             frame = document.getElementById(widgetListCode[i]);
             injectContent(frame);
+            injectCss(frame);
         }
     }
 
@@ -127,15 +139,32 @@
         iframeDocument.close();
 
         if (frame.style.visibility !== '' || frame.style.height === '0px') {
-            setIframeStyle(frame);
+            setIframeInlineStyle(frame);
         }
     }
 
-    function setIframeStyle(frame) {
+    function injectCss(frame) {
+        var iframeDocument = frame.contentDocument,
+            iframeHead = iframeDocument.getElementsByTagName('head')[0],
+            styleTag = document.createElement('style'),
+            style = styleCollection;
+
+        styleTag.type = 'text/css';
+        
+        if (styleTag.styleSheet){
+          styleTag.styleSheet.cssText = style.css;
+        } 
+        else {
+          styleTag.appendChild(iframeDocument.createTextNode(style.css));
+        }
+
+        iframeHead.appendChild(styleTag);
+    }
+
+    function setIframeInlineStyle(frame) {
         var width,
             height = widgetParams.height;
 
-        console.error(frame);
         widgetParams.width === 'flexible' ? width = '100%' : width = widgetParams.width;
         frame.setAttribute('style', 'width:'+ width + 'px; height: ' + height + 'px');
     }
@@ -202,6 +231,7 @@
                 callbackSuccess: function(response) {
                     try {
                         prepareTpl(response);
+                        prepareCss(response);
                         renderTpl();
                         initListeners();
                     }
