@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/dosandk/widget#readme",
   "devDependencies": {
-    "gulp": "^3.9.0",
+    "gulp": "~3.9.0",
     "gulp-inline-css": "^3.0.0"
   }
 }
