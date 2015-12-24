@@ -4,6 +4,9 @@ var gulp = require('gulp'),
 
 var filesToMove = [
         'widget-factory.js',
+        'data/*',
+        'fonts/*',
+        'img/*'
     ];
 
 gulp.task('minify-css', function() {
