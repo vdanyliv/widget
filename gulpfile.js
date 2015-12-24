@@ -3,7 +3,7 @@ var gulp = require('gulp'),
     inject = require('gulp-inject');
 
 var filesToMove = [
-        'widget-factory.js',
+        'owo-poller.js',
         'data/*',
         'fonts/*',
         'img/*'
