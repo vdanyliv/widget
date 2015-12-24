@@ -340,12 +340,7 @@
         });
     }
 
-    //function pollAuth(frameId) {
-    //    console.log('Voted: ', dataForSubmit);
-    //}
-
     /*----------  operation with Data  ----------*/
-    
     function applyDataInForm() {
         var iframe,
             markOptionElement,
@@ -429,7 +424,3 @@
         }
     }
 }));
-
-// 1. Object var App = {};
-// 2. Function var App = function() {}; App.initialize();
-// 3. Self-invoking function (function() {}());
