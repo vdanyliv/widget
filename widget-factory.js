@@ -7,15 +7,18 @@
     var isDataRequired = true,
         widgetListCode = [],
         tplListener = {},
-        templates = {},
+        templateCollection = {},
         styleCollection = {},
         dataCollection = null,
         dataForSubmit = {},
-        tplUrl = './build/templates/widget-content.tpl',
-        dataUrl = './build/data/collection.json'
         widgetParams = {
             width: 250, //can be use with 'flexible' param
             height: 400,
+            dataUrl: './build/data/collection.json',
+            tplUrl: './build/templates/widget-content.tpl',
+            apis: {
+                vote: 'https://1worldonline.com/1ws/api-v1/PollVote?apiKey=dc51ab19-7160-47c0-9ea8-fa529257251b'
+            }
         };
 
 
@@ -52,38 +55,57 @@
             token = Math.floor(Math.random() * 50000) + 10000;
         
         widgetListCode.push('owo-' + token);
+        dataForSubmit['owo-' + token] = {};
 
         return 'owo-' + token;
     }
 
     /*----------  Ajax CORS wrapper  ----------*/
-    function createCORSrequest(method, url) {
+    function createCORSrequest(objParams) {
         var xhr = new XMLHttpRequest(),
             xdr;
 
         if ('withCredentials' in xhr) {
             //support for modern browser
-            xhr.open(method, url, true);
+            xhr.open(objParams.method, objParams.url, true);
         }
         else if (typeof XDomainRequest != undefined) {
             //IE support
             xdr = new XDomainRequest();
-            xdr.open(method, url);
+            xdr.open(objParams.method, objParams.url);
         }
-        else {responseText
+        else {
             //xhr not supported
             xhr = null;
+        }
+
+        if (objParams.method === 'POST' && xhr) {
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         }
 
         return xhr != undefined ? xhr : xdr;
     }
 
     function makeCorsRequest(objParams) {
-        var xhr = createCORSrequest(objParams.method, objParams.url);
+        var xhr = createCORSrequest(objParams);
 
         if (!xhr) {
             console.warn('CORS not supported!');
             return;
+        }
+
+        function param(object) {
+            var encodedString = '';
+            
+            for (var prop in object) {
+                if (object.hasOwnProperty(prop)) {
+                    if (encodedString.length > 0) {
+                        encodedString += '&';
+                    }
+                    encodedString += encodeURI(prop + '=' + object[prop]);
+                }
+            }
+            return encodedString;
         }
 
         xhr.onload = function() {
@@ -99,7 +121,12 @@
             console.error('Request error');
         }
 
-        xhr.send();
+        if (objParams.method === 'GET') {
+            xhr.send()
+        }
+        else if (objParams.method === 'POST') {
+            xhr.send(param(objParams.data));
+        }
     }
 
     /*----------  prepare tpl for action  ----------*/
@@ -107,10 +134,10 @@
         var re = /<tpl[\s\t]+id=\"((?!\")\w+)\"[\s\t]*>(((?!<\/tpl).)*)<\/tpl>/g;
 
         tpl.replace(/(\r\n|\n|\r)/gm, "").replace(re, function(matchStr, id, template) {
-            templates[id] = template;
+            templateCollection[id] = template;
         });
 
-        return templates;
+        return templateCollection;
     }
 
     function prepareCss(tpl) {
@@ -135,19 +162,29 @@
 
     function injectContent(frame, tplIndex) {
         var iframeDocument = frame.contentDocument,
-            templateSize = Object.keys(templates),
+            templateSize = Object.keys(templateCollection),
             tplCurrentIndex = tplIndex !== undefined ? tplIndex : 0;
         
         if (tplCurrentIndex === 0) {
             iframeDocument.open();
-            iframeDocument.write(templates[templateSize[tplCurrentIndex]]);  
+            iframeDocument.write(templateCollection[templateSize[tplCurrentIndex]]);  
         }
         else {
             var iframeBody = iframeDocument.getElementsByTagName('body')[0];
 
-            iframeBody.innerHTML = templates[templateSize[tplCurrentIndex]];
+            iframeBody.innerHTML = templateCollection[templateSize[tplCurrentIndex]];
         }
-        
+
+        //additional operations with template
+        if (iframeDocument.getElementsByClassName('js-choosen-mark')[0] && iframeDocument.getElementsByClassName('js-choosen-model')[0]) {
+            var mark = dataCollection.cars.mark[dataForSubmit[frame.attributes.id.value]['mark']],
+                model = dataCollection.cars.model[dataForSubmit[frame.attributes.id.value]['mark']][dataForSubmit[frame.attributes.id.value]['model']];
+
+            iframeDocument.getElementsByClassName('js-choosen-mark')[0].innerHTML = mark;
+            iframeDocument.getElementsByClassName('js-choosen-model')[0].innerHTML = model;
+        }
+
+        //additional operations with iframe
         if (frame.style.visibility !== '' || frame.style.height === '0px') {
             setIframeInlineStyle(frame);
         }
@@ -182,7 +219,7 @@
     /*----------  get data for widget  ----------*/
     function getWidgetData() {
         makeCorsRequest({
-            url: dataUrl,
+            url: widgetParams.dataUrl,
             method: 'GET',
             callbackSuccess: function(response) {
                 try {
@@ -195,8 +232,8 @@
             }
         });
     }
-    /*----------  init listeners  ----------*/
 
+    /*----------  init listeners  ----------*/
     function initListeners(activeFrame) {
         var iframe = activeFrame !== undefined ? activeFrame : null;
 
@@ -255,33 +292,57 @@
     }
 
     function prepareDataForSubmit(input) {
-        if (input.className.indexOf('js-pick-model') !== -1) {
-            dataForSubmit['pollId'] = input.value
-        }
-        if (input.className.indexOf('js-auth') !== -1) {
-            dataForSubmit['auth'] = input.value
-        }
+        var activeIframeForm = document.activeElement,
+            iframeId = activeIframeForm.attributes.id.value;
+
+        dataForSubmit[iframeId][input.name] = input.value
     }
 
     /*----------  tplCollection action  ----------*/
     function showNextView() {
         var frame = document.activeElement,
-            frametId = frame.attributes.id.value,
-            templateSize = Object.keys(templates);
+            frameId = frame.attributes.id.value,
+            templateSize = Object.keys(templateCollection);
 
-        if (tplListener[frametId] + 1 < templateSize.length) {
-            injectContent(frame, tplListener[frametId] + 1);
+        //check for last page
+        if (tplListener[frameId] + 1  === templateSize.length - 1) {
+            pollVote(frameId);
+            //pollAuth(frameId);
+        }
+        
+        //check for next page
+        if (tplListener[frameId] + 1 < templateSize.length) {
+            injectContent(frame, tplListener[frameId] + 1);
             initListeners(frame);
-            tplListener[frametId] += 1;
+            tplListener[frameId] += 1;
         }
     }
 
     /*----------  vote/auth action  ----------*/
-    var sdk = {
-        pollVote: function(sideId) {
-            console.log('Voted: ', sideId);
-        }
-    };
+    function pollVote(frameId) {
+        var voteSide = dataForSubmit[frameId].model;
+        
+        makeCorsRequest({
+            url: widgetParams.apis.vote,
+            method: 'POST',
+            data: {
+                sideId: voteSide,
+                urlVotedFrom: location.hostname
+            },
+            callbackSuccess: function(response) {
+                try {
+                    console.error(response);
+                }
+                catch (e) {
+                    console.log('1W Error ' + e.name + ":" + e.message + "\n" + e.stack);
+                }
+            }
+        });
+    }
+
+    //function pollAuth(frameId) {
+    //    console.log('Voted: ', dataForSubmit);
+    //}
 
     /*----------  operation with Data  ----------*/
     
@@ -348,7 +409,7 @@
             var self = this;
 
             makeCorsRequest({
-                url: tplUrl,
+                url: widgetParams.tplUrl,
                 method: 'GET',
                 callbackSuccess: function(response) {
                     try {
