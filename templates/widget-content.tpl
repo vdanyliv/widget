@@ -5,10 +5,10 @@
 	    </div>
 	    <div class="formbox">
 	        <form>
-	            <select id="mark" class="textfield" require>
+	            <select id="mark" class="textfield" name="mark" require>
 	                <option value="false">Выберите марку</option>
 	            </select>
-	            <select class="textfield js-pick-model" require>
+	            <select class="textfield js-pick-model" name="model" disabled="disabled" require>
 	                <option value="false">Выберите модель</option>
 	            </select>
 	            <input id="js-next-step" type="submit" value="ГОЛОСОВАТЬ" class="submit">
@@ -23,10 +23,10 @@
         </div>
         <div class="formbox">
             <h1>Ваш выбор</h1>
-            <p class="choosen-tm"><span class="js-choosen-mark">ASTON MARTIN</span><br>
-                <span class="js-choosen-model">V8 VANTAGE ROADSTER/S</span></p>
+            <p class="choosen-tm"><span class="js-choosen-mark"></span><br>
+                <span class="js-choosen-model"></span></p>
             <form>
-                <select class="textfield js-auth" require>
+                <select class="textfield js-auth"  name="authType" require>
                     <option value="false">Способ регистрации</option>
                     <option value="email">E-mail</option>
                     <option value="vk">VKontakte</option>
