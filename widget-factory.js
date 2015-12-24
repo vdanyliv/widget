@@ -331,7 +331,7 @@
             },
             callbackSuccess: function(response) {
                 try {
-                    console.error(response);
+                    console.log('success vote ' + response);
                 }
                 catch (e) {
                     console.log('1W Error ' + e.name + ":" + e.message + "\n" + e.stack);
