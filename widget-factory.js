@@ -4,14 +4,18 @@
         document.addEventListener('DOMContentLoaded', oneWorldWidget.initialize.bind(oneWorldWidget));
     }
 }(this, function() {
-    var widgetListCode = [],
+    var isDataRequired = true,
+        widgetListCode = [],
         tplListener = {},
         templates = {},
         styleCollection = {},
+        dataCollection = null,
+        dataForSubmit = {},
         tplUrl = './build/templates/widget-content.tpl',
+        dataUrl = './build/data/collection.json'
         widgetParams = {
-            width: 200, //can be use with 'flexible' param
-            height: 300,
+            width: 250, //can be use with 'flexible' param
+            height: 400,
         };
 
 
@@ -133,11 +137,17 @@
         var iframeDocument = frame.contentDocument,
             templateSize = Object.keys(templates),
             tplCurrentIndex = tplIndex !== undefined ? tplIndex : 0;
+        
+        if (tplCurrentIndex === 0) {
+            iframeDocument.open();
+            iframeDocument.write(templates[templateSize[tplCurrentIndex]]);  
+        }
+        else {
+            var iframeBody = iframeDocument.getElementsByTagName('body')[0];
 
-        iframeDocument.open();
-        iframeDocument.write(templates[templateSize[tplCurrentIndex]]);
-        iframeDocument.close();
-
+            iframeBody.innerHTML = templates[templateSize[tplCurrentIndex]];
+        }
+        
         if (frame.style.visibility !== '' || frame.style.height === '0px') {
             setIframeInlineStyle(frame);
         }
@@ -165,33 +175,92 @@
         var width,
             height = widgetParams.height;
 
-        widgetParams.width === 'flexible' ? width = '100%' : width = widgetParams.width;
-        frame.setAttribute('style', 'width:'+ width + 'px; height: ' + height + 'px');
+        widgetParams.width === 'flexible' ? width = '100%' : width = widgetParams.width + 'px';
+        frame.setAttribute('style', 'width:'+ width + '; height: ' + height + 'px');
     }
 
+    /*----------  get data for widget  ----------*/
+    function getWidgetData() {
+        makeCorsRequest({
+            url: dataUrl,
+            method: 'GET',
+            callbackSuccess: function(response) {
+                try {
+                    dataCollection = JSON.parse(response);
+                    applyDataInForm();
+                }
+                catch (e) {
+                    console.log('1W Error ' + e.name + ":" + e.message + "\n" + e.stack);
+                }
+            }
+        });
+    }
     /*----------  init listeners  ----------*/
 
-    function initListeners() {
-        var iframe;
+    function initListeners(activeFrame) {
+        var iframe = activeFrame !== undefined ? activeFrame : null;
 
-        for (var i = 0; i < widgetListCode.length; i++) {
-            iframe = document.getElementById(widgetListCode[i]);
-        
-            if (iframe.contentDocument.getElementById('submit-poll') !== null) {
-                iframe.contentDocument.getElementById('submit-poll').addEventListener('click', clickListener, false);
+        if (iframe === null) {
+            for (var i = 0; i < widgetListCode.length; i++) {
+                iframe = document.getElementById(widgetListCode[i]);
+                setListener(iframe);
+            }
+        }
+        else {
+            setListener(iframe);
+        }
+    }
+
+    function setListener(iframe) {
+        if (iframe.contentDocument.getElementById('js-next-step') !== null) {
+            iframe.contentDocument.getElementById('js-next-step').addEventListener('click', clickListener, false);
+        }
+
+        if (iframe.contentDocument.getElementById('mark') !== null) {
+            iframe.contentDocument.getElementById('mark').addEventListener('click', optionsListener, false);
+        }
+
+        function clickListener(event) {
+            event.preventDefault();
+            
+            if (validatePollForm(event)) {
+                showNextView();
             }
         }
 
-        function clickListener() {
-            if (validatePollForm()) {
-                showNextView();
-            }
+        function optionsListener(event) {
+            event.preventDefault();
+            pickCarModel(event);
         }
     }
 
     /*----------  validate section  ----------*/
-    function validatePollForm() {
-        return true;
+    function validatePollForm(event) {
+        var isValid = true,
+            form = event.currentTarget.parentElement,
+            requireInputList = form.querySelectorAll('[require]');
+
+        for (var i = 0; i < requireInputList.length; i++) {
+            if (requireInputList[i].value === 'false') {
+                requireInputList[i].setAttribute('class', requireInputList[i].className + ' error');
+                isValid = false;
+            }
+            else {
+                requireInputList[i].setAttribute('class', requireInputList[i].className.replace('error', ''));
+                prepareDataForSubmit(requireInputList[i]);
+            }
+        }
+
+        return isValid;
+    }
+
+    function prepareDataForSubmit(input) {
+        if (input.className.indexOf('js-pick-model') !== -1) {
+            dataForSubmit['pollId'] = input.value
+        }
+        if (input.className.indexOf('js-auth') !== -1) {
+            dataForSubmit['auth'] = input.value
+        }
     }
 
     /*----------  tplCollection action  ----------*/
@@ -202,20 +271,73 @@
 
         if (tplListener[frametId] + 1 < templateSize.length) {
             injectContent(frame, tplListener[frametId] + 1);
-            initListeners();
+            initListeners(frame);
             tplListener[frametId] += 1;
         }
     }
-    
+
+    /*----------  vote/auth action  ----------*/
     var sdk = {
         pollVote: function(sideId) {
             console.log('Voted: ', sideId);
         }
     };
 
+    /*----------  operation with Data  ----------*/
+    
+    function applyDataInForm() {
+        var iframe,
+            markOptionElement,
+            markCollection = dataCollection.cars.mark;
+
+        for (var i = 0; i < widgetListCode.length; i++) {
+            iframe = document.getElementById(widgetListCode[i]).contentDocument;
+            markOptionElement = iframe.getElementById('mark');
+
+            for (var value in markCollection) {
+                /*creating options for car mark*/
+                var createOptionElement = iframe.createElement('option');
+                createOptionElement.setAttribute('value', value);
+                createOptionElement.text = markCollection[value];
+                markOptionElement.appendChild(createOptionElement);
+            }
+        }
+    }
+
+    function pickCarModel(selectionEvent) {
+        var selectedMark = selectionEvent.currentTarget.value,
+            iframeForm = selectionEvent.currentTarget.parentNode,
+            modelOptionElement = iframeForm.getElementsByClassName('js-pick-model')[0],
+            modelCollection = dataCollection.cars.model,
+            createOptionElement = document.createElement('option');
+
+        //clear before adding new data
+        modelOptionElement.innerHTML = '';
+        
+        if (modelCollection[selectedMark] !== undefined) {
+            for (var value in modelCollection[selectedMark]) {
+                /*creating options for car mark - > model*/
+                var createOptionElement = document.createElement('option');
+                createOptionElement.setAttribute('value', value);
+                createOptionElement.text = modelCollection[selectedMark][value];
+                modelOptionElement.appendChild(createOptionElement);
+
+                if (modelOptionElement.hasAttribute('disabled')) {
+                    modelOptionElement.removeAttribute('disabled');
+                }
+            }
+        }
+        else {
+            var createOptionElement = document.createElement('option');
+            createOptionElement.setAttribute('value', 'false');
+            createOptionElement.text = dataCollection['defaultModel']['false'];
+            modelOptionElement.setAttribute('disabled', 'disabled');
+            modelOptionElement.appendChild(createOptionElement);
+        }
+    }
+
     return {
         version: '0.0.1',
-        widgetElement: null,
         initialize: function() {
             var self = this;
             
@@ -233,6 +355,9 @@
                         prepareTpl(response);
                         prepareCss(response);
                         renderTpl();
+                        if (isDataRequired) {
+                            getWidgetData();
+                        }
                         initListeners();
                     }
                     catch (e) {
