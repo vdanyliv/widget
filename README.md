@@ -1,5 +1,5 @@
 Light version of poll widget. 
-Writed using only poor js, without any additional libs like jQuery, etc..
+Writed using only pure js, without any additional libs like jQuery, etc..
 </br>
 <b>How to run:</b>
 <ul>
